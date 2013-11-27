@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Stack;
 
+import android.util.Log;
+
 public class Calculate {
 
 	private static final Map<String, Integer> OPERATORS = new HashMap<String, Integer>();
@@ -22,6 +24,13 @@ public class Calculate {
 		return OPERATORS.containsKey(str);// 如果存在指定键的映射关系则返回true，否则返回false
 	}
 
+	/*private static boolean is4Operator(String ch) {
+		boolean bOperator = false;
+		if (ch == "+" || ch == "-" || ch == "x" || ch == "/")
+			bOperator = true;
+		return bOperator;
+	}
+
 	// 比较运算符的优先级
 	private static final int comparePrecedence(String op1, String op2) {
 		if (!isOperator(op1) || !isOperator(op2)) {
@@ -30,7 +39,7 @@ public class Calculate {
 					+ op2);
 		}
 		return OPERATORS.get(op1) - OPERATORS.get(op2);
-	}
+	}*/
 
 	// Split the infix notation and store the operands and operators in the
 	// returned array.
@@ -49,7 +58,8 @@ public class Calculate {
 												// 的值。Character 类型的对象包含类型为 char
 												// 的单个字段。
 
-			if (isOperator(str)) {
+			if (str.equals("+") || str.equals("-") || str.equals("x")
+					|| str.equals("/")) {
 				// Check that lastOperand must have some characters.
 				// Note that we allow negative values, such as -4.5 + 2,
 				// we need to take care of the leading negative sign.
@@ -68,13 +78,23 @@ public class Calculate {
 				strArray.add(str);
 
 				lastOperand = "";
+			} else if (str.equals("(")) {
+				strArray.add(str);
+				lastOperand = "";
+			} else if (str.equals(")")) {
+				if (lastOperand == "")
+					return null;
+				strArray.add(lastOperand);
+				strArray.add(str);
+				lastOperand = "";
 			} else {
 				lastOperand += ch;
 			}
 		}
 
 		// Add the last operand
-		strArray.add(lastOperand);
+		if (lastOperand != "")
+			strArray.add(lastOperand);
 
 		String[] outputs = new String[strArray.size()];
 		return strArray.toArray(outputs);
@@ -94,26 +114,46 @@ public class Calculate {
 		Stack<String> stack = new Stack<String>();
 
 		for (String input : inputs) {
-			if (isOperator(input)) { // 如果是运算符
+			String temp;
+			Log.w("DisplayActivity", "it is " + rpnExp.toString());
 
-				while (!stack.empty() && isOperator(stack.peek())) {
-					if (comparePrecedence(input, stack.peek()) <= 0
-							&& stack.peek() != "(") {
-						rpnExp += " ";
-						rpnExp += stack.peek();
-						stack.pop();// 栈顶元素出栈
-						continue;
-					}
-					if (stack.peek() == "(" && input == ")") {
-						stack.pop();
-						break;
-					}
-					break;
-
+			if(input.equals("(")) stack.push(input);
+			else if(input.equals("+")||input.equals("-")){
+				while(stack.size()!=0){
+					 temp = stack.pop();  
+	                    if (temp.equals("(")) {  
+	                        stack.push("(");  
+	                        break;  
+	                    }  
+	                    rpnExp += " " + temp;
 				}
-
-				stack.push(input);
-			} else {
+				stack.push(input);  
+				rpnExp += " ";  
+			}
+			else if(input.equals("x")||input.equals("/")){
+				while (stack.size() != 0) {  
+                    temp = stack.pop();  
+                    if (temp.equals("(")|| temp.equals("+") || temp.equals("-")) {  
+                        stack.push(temp);  
+                        break;  
+                    } else {  
+                    	rpnExp += " " + temp;  
+                    }  
+                }  
+                stack.push(input);  
+                rpnExp += " ";  
+			}
+			else if(input.equals(")")){
+				while (stack.size() != 0) {  
+                    temp = stack.pop();  
+                    if (temp.equals("("))  
+                        break;  
+                    else  
+                    	rpnExp += " " + temp;  
+                }  
+                //rpnExp += " ";  
+			}
+			else {
 				rpnExp += " ";
 				rpnExp += input;
 			}
@@ -123,7 +163,7 @@ public class Calculate {
 			rpnExp += " ";
 			rpnExp += stack.pop();
 		}
-
+		Log.w("DisplayActivity", "it is " + rpnExp.toString());
 		return rpnExp.trim();
 	}
 
@@ -131,7 +171,7 @@ public class Calculate {
 	private static double evalRPN(String rpnExp) {
 		double result = 0.0;
 
-		String[] inputs = rpnExp.split(" ");
+		String[] inputs = rpnExp.split(" ");// split():根据给定正则表达式的匹配或字符来拆分此字符串
 
 		Stack<Double> stack = new Stack<Double>();
 		for (String op : inputs) {
